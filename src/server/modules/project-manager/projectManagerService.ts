@@ -1,5 +1,5 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
+import { DATA_DIR, readJsonFile, writeJsonAtomic } from '../../db.ts';
 
 export interface FlightTask {
   id: string;
@@ -22,30 +22,16 @@ export interface FlightMilestone {
   completed: boolean;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
 const TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
 const MILESTONES_FILE = path.join(DATA_DIR, 'milestones.json');
 
-async function ensureDataDir() {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-  } catch {}
-}
-
 export async function getTasks(projectId?: string): Promise<FlightTask[]> {
-  await ensureDataDir();
-  try {
-    const raw = await fs.readFile(TASKS_FILE, 'utf-8');
-    const tasks: FlightTask[] = JSON.parse(raw);
-    return projectId ? tasks.filter((t) => t.projectId === projectId) : tasks;
-  } catch {
-    return [];
-  }
+  const tasks = await readJsonFile<FlightTask[]>(TASKS_FILE, []);
+  return projectId ? tasks.filter((t) => t.projectId === projectId) : tasks;
 }
 
 export async function saveTasks(tasks: FlightTask[]): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(TASKS_FILE, JSON.stringify(tasks, null, 2), 'utf-8');
+  await writeJsonAtomic(TASKS_FILE, tasks);
 }
 
 export async function addTask(task: Omit<FlightTask, 'id' | 'createdAt'>): Promise<FlightTask> {
