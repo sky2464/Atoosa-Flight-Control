@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { getProjects, getProjectById, upsertProject, deleteProject } from '../db.ts';
+import { getProjects, getProjectById, upsertProject, deleteProject, getTelemetryHistory } from '../db.ts';
 import { isTowerAppDir } from '../engine/os/platform.ts';
 import { safeSpawn } from '../engine/os/process.ts';
 import { softReadProject } from '../modules/scanner/scannerService.ts';
@@ -20,6 +20,16 @@ projects.get('/:id', async (c) => {
   const project = await getProjectById(c.req.param('id'));
   if (!project) return c.json({ success: false, error: 'Project not found' }, 404);
   return c.json({ success: true, project });
+});
+
+projects.get('/:id/history', async (c) => {
+  const id = c.req.param('id');
+  const project = await getProjectById(id);
+  if (!project) return c.json({ success: false, error: 'Project not found' }, 404);
+  const limitQuery = c.req.query('limit');
+  const limit = limitQuery ? parseInt(limitQuery, 10) : 50;
+  const history = await getTelemetryHistory(id, isNaN(limit) ? 50 : limit);
+  return c.json({ success: true, history });
 });
 
 /**
