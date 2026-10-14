@@ -95,6 +95,39 @@ export function resolveDataDir(overrideDir?: string): string {
 }
 
 /**
+ * Resolves the absolute root directory of the Atoosa Flight Control tower application itself.
+ */
+export function getTowerRoot(): string {
+  // src/server/engine/os -> ../../../../ -> repo root
+  return path.resolve(import.meta.dir, '../../../../');
+}
+
+/**
+ * Checks whether a given directory is the Atoosa Flight Control tower application itself.
+ * The Control Tower is an external observer and must never monitor or register itself.
+ */
+export function isTowerAppDir(candidatePath: string): boolean {
+  try {
+    const resolved = path.resolve(candidatePath);
+    const towerRoot = getTowerRoot();
+    if (resolved === towerRoot) {
+      return true;
+    }
+
+    const pkgPath = path.join(resolved, 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+      if (pkg.name === 'atoosa-flight-control') {
+        return true;
+      }
+    }
+  } catch {
+    // If reading failed, not the tower
+  }
+  return false;
+}
+
+/**
  * Returns complete platform diagnostic info.
  */
 export function getPlatformInfo(overrideDir?: string): PlatformInfo {

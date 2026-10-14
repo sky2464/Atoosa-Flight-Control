@@ -5,6 +5,7 @@ import { emitGovernanceFiles } from '../src/server/modules/governance/governance
 import { detectSystemCLIs } from '../src/server/modules/system/systemService.ts';
 import { getTasks, addTask, updateTask } from '../src/server/modules/project-manager/projectManagerService.ts';
 import { getProjects, upsertProject, getSettings, saveSettings } from '../src/server/db.ts';
+import { isTowerAppDir } from '../src/server/engine/os/platform.ts';
 import path from 'node:path';
 
 const args = process.argv.slice(2);
@@ -24,7 +25,21 @@ function printBanner() {
 async function run() {
   switch (command) {
     case 'scan': {
-      const targetDir = path.resolve(args[1] || process.cwd());
+      const inputPath = args[1];
+      if (!inputPath && isTowerAppDir(process.cwd())) {
+        console.log(`\n\x1b[33m⚠ [AFC Guard] The Flight Control Tower cannot monitor itself.\x1b[0m`);
+        console.log(`Please specify an external target project path to scan:`);
+        console.log(`  \x1b[36mafc scan /path/to/your/project\x1b[0m\n`);
+        return;
+      }
+
+      const targetDir = path.resolve(inputPath || process.cwd());
+      if (isTowerAppDir(targetDir)) {
+        console.log(`\n\x1b[31m✖ [AFC Error] Cannot scan the Control Tower directory itself.\x1b[0m`);
+        console.log(`Please specify an external target project directory.\n`);
+        return;
+      }
+
       console.log(`\n\x1b[36m🛫 [AFC Engine] Soft-reading runway:\x1b[0m ${targetDir}\n`);
       const telemetry = await softReadProject(targetDir);
 
@@ -65,7 +80,18 @@ async function run() {
     }
 
     case 'radar': {
-      const targetDir = path.resolve(args[1] || process.cwd());
+      const inputPath = args[1];
+      if (!inputPath && isTowerAppDir(process.cwd())) {
+        console.log(`\n\x1b[33m⚠ [AFC Guard] The Flight Control Tower cannot monitor itself.\x1b[0m`);
+        console.log(`Please specify a target project runway to inspect:`);
+        console.log(`  \x1b[36mafc radar /path/to/your/project\x1b[0m\n`);
+        return;
+      }
+      const targetDir = path.resolve(inputPath || process.cwd());
+      if (isTowerAppDir(targetDir)) {
+        console.log(`\n\x1b[31m✖ [AFC Error] Cannot inspect the Control Tower directory itself.\x1b[0m\n`);
+        return;
+      }
       const telemetry = await softReadProject(targetDir);
       console.log(`\n\x1b[35m📡 [AFC Radar] 500-Line Gate Inspection: ${path.basename(targetDir)}\x1b[0m`);
       if (telemetry.filesOver500Lines.length === 0) {
@@ -115,7 +141,19 @@ async function run() {
     }
 
     case 'emit': {
-      const targetDir = path.resolve(args[1] || process.cwd());
+      const inputPath = args[1];
+      if (!inputPath && isTowerAppDir(process.cwd())) {
+        console.log(`\n\x1b[33m⚠ [AFC Guard] Cannot emit governance files into the Flight Control Tower itself.\x1b[0m`);
+        console.log(`Please specify a target project runway to emit files into:`);
+        console.log(`  \x1b[36mafc emit /path/to/your/project\x1b[0m\n`);
+        return;
+      }
+
+      const targetDir = path.resolve(inputPath || process.cwd());
+      if (isTowerAppDir(targetDir)) {
+        console.log(`\n\x1b[31m✖ [AFC Error] Cannot emit governance files into the Control Tower itself.\x1b[0m\n`);
+        return;
+      }
       const projectName = path.basename(targetDir);
       console.log(`\n\x1b[36m📜 Emitting clean governance rulebooks to: ${targetDir}\x1b[0m`);
 

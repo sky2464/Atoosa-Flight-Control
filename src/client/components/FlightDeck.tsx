@@ -36,7 +36,14 @@ export const FlightDeck: React.FC<FlightDeckProps> = ({
     setAttachError(null);
 
     try {
-      const derivedName = attachName.trim() || attachPath.split(/[/\\]/).filter(Boolean).pop() || 'Project';
+      const validation = await api.validateProjectPath(attachPath.trim());
+      if (!validation.valid) {
+        setAttachError(validation.error || 'Invalid project directory');
+        setIsAttaching(false);
+        return;
+      }
+
+      const derivedName = attachName.trim() || validation.name || 'Project';
       
       // Perform soft-read first (zero touch)
       const telemetry = await api.scanProject(attachPath.trim());

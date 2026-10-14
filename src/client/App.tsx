@@ -162,11 +162,22 @@ export const App: React.FC = () => {
         onSaved={(updated) => setSettings(updated)}
       />
 
-      {/* First-time Onboarding Modal (Connect to Terminal AI) */}
+      {/* First-time Onboarding Modal (Connect to Terminal AI & Target Project Runway) */}
       <OnboardingModal
         isOpen={isOnboardingOpen}
         onClose={() => setIsOnboardingOpen(false)}
-        onCompleted={(updated) => setSettings(updated)}
+        onCompleted={(updated, attached) => {
+          setSettings(updated);
+          if (attached) {
+            loadProjects();
+            setActiveProject(attached);
+            setActiveView('radar-500');
+          }
+        }}
+        onStartNewProject={() => {
+          setIsOnboardingOpen(false);
+          setActiveView('flights-new');
+        }}
       />
     </div>
   );

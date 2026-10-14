@@ -48,6 +48,26 @@ export const api = {
     return data.success;
   },
 
+  async validateProjectPath(path: string): Promise<{ valid: boolean; name?: string; path?: string; hasGit?: boolean; error?: string }> {
+    const res = await fetch(`${API_BASE}/projects/validate-path`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path }),
+    });
+    return res.json();
+  },
+
+  async cloneProject(repoUrl: string, targetDir: string): Promise<ProjectRecord> {
+    const res = await fetch(`${API_BASE}/projects/clone`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoUrl, targetDir }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to clone project');
+    return data.project;
+  },
+
   // Scanner
   async scanProject(path: string, projectId?: string): Promise<TelemetrySummary> {
     const res = await fetch(`${API_BASE}/scanner/scan`, {

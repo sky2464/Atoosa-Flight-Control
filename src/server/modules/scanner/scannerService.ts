@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { FileMetric, TelemetrySummary } from '../../../shared/types.ts';
-import { toPosixPath } from '../../engine/os/platform.ts';
+import { toPosixPath, isTowerAppDir } from '../../engine/os/platform.ts';
 
 const IGNORED_DIRS = new Set([
   'node_modules',
@@ -63,6 +63,13 @@ const BINARY_EXTENSIONS = new Set([
 export async function softReadProject(targetPath: string): Promise<TelemetrySummary> {
   const normalizedPath = path.resolve(targetPath);
   
+  // Anti-dogfooding guard: The Control Tower governs target codebases, not itself.
+  if (isTowerAppDir(normalizedPath)) {
+    throw new Error(
+      `Cannot scan or monitor the Control Tower itself. Atoosa Flight Control is an external observer for target projects. Please specify an external project directory.`
+    );
+  }
+
   // Verify target path exists
   try {
     const stat = await fs.stat(normalizedPath);
