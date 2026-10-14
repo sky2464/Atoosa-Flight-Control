@@ -29,11 +29,11 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       const detected = await api.getCLIs();
       setClis(detected);
 
-      // Pre-select claude-cli if found
-      const claude = detected.find((c) => c.id === 'claude-cli' && c.available);
-      if (claude) {
-        setSelectedCli('claude-cli');
-        if (claude.path) setCustomPath(claude.path);
+      // Pre-select the first available tool (antigravity, claude, codex, cursor, etc.)
+      const firstAvailable = detected.find((c) => c.available);
+      if (firstAvailable) {
+        setSelectedCli(firstAvailable.id);
+        if (firstAvailable.path) setCustomPath(firstAvailable.path);
       }
     } catch (err: any) {
       console.error('Failed to probe CLIs:', err);
@@ -93,9 +93,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         </button>
 
         <div className="space-y-1.5 pr-8">
-          <h2 className="text-base font-medium text-slate-100">Connect a terminal AI</h2>
+          <h2 className="text-base font-medium text-slate-100">Connect Local AI Co-pilot</h2>
           <p className="text-[13px] leading-relaxed text-slate-400">
-            Flight Control uses the tools already installed on this machine, like Claude Code or Ollama. No API keys needed.
+            Flight Control links directly to your local coding tools (Google Antigravity, Claude Code, OpenAI Codex, Cursor, GitHub Copilot, or Ollama) using your existing local accounts. Zero API keys required.
           </p>
         </div>
 
@@ -119,7 +119,11 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     type="radio"
                     name="selectedCli"
                     checked={isSelected}
-                    onChange={() => setSelectedCli(cli.id)}
+                    onChange={() => {
+                      setSelectedCli(cli.id);
+                      setCustomPath(cli.path || '');
+                      setTestResult(null);
+                    }}
                     disabled={!cli.available}
                     className="accent-sky-400"
                   />

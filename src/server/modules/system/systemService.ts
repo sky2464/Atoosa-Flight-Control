@@ -12,6 +12,14 @@ interface CLIProbe {
 
 const PROBES: CLIProbe[] = [
   {
+    id: 'antigravity',
+    name: 'Google Antigravity CLI (agy)',
+    command: 'agy',
+    defaultPaths: [],
+    versionFlag: '--version',
+    description: 'Local Google Antigravity autonomous agent CLI.',
+  },
+  {
     id: 'claude-cli',
     name: 'Claude Code CLI',
     command: 'claude',
@@ -20,12 +28,12 @@ const PROBES: CLIProbe[] = [
     description: 'Anthropic Claude Code CLI running with your local account and active subscription.',
   },
   {
-    id: 'ollama',
-    name: 'Ollama Local LLM',
-    command: 'ollama',
+    id: 'codex',
+    name: 'OpenAI Codex CLI',
+    command: 'codex',
     defaultPaths: [],
     versionFlag: '--version',
-    description: 'Local offline LLM runner (Llama 3, Mistral, Qwen, DeepSeek).',
+    description: 'OpenAI Codex terminal coding agent.',
   },
   {
     id: 'cursor',
@@ -42,6 +50,14 @@ const PROBES: CLIProbe[] = [
     defaultPaths: [],
     versionFlag: '--version',
     description: 'GitHub CLI with potential GitHub Copilot extension.',
+  },
+  {
+    id: 'ollama',
+    name: 'Ollama Local LLM',
+    command: 'ollama',
+    defaultPaths: [],
+    versionFlag: '--version',
+    description: 'Local offline LLM runner (Llama 3, Mistral, Qwen, DeepSeek).',
   },
   {
     id: 'bun',

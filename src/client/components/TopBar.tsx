@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Plane, Terminal, Settings, User } from 'lucide-react';
+import { Plane, Terminal, Settings, User, Sparkles } from 'lucide-react';
 import type { AppSettings } from '../../shared/types.ts';
 
 interface TopBarProps {
@@ -31,10 +31,21 @@ export const TopBar: React.FC<TopBarProps> = ({
     name: 'Flight Commander',
     callsign: 'TOWER-1',
     role: 'Lead Architect',
-    workstation: 'Localhost Mac',
+    workstation: 'Localhost',
   };
 
   const isCliLinked = !!settings?.onboardingCompleted && !!settings.selectedCli;
+  const cliLabel = settings?.selectedCli === 'claude-cli'
+    ? 'Claude Code'
+    : settings?.selectedCli === 'antigravity'
+    ? 'Antigravity'
+    : settings?.selectedCli === 'codex'
+    ? 'Codex'
+    : settings?.selectedCli === 'cursor'
+    ? 'Cursor'
+    : settings?.selectedCli === 'ollama'
+    ? 'Ollama'
+    : settings?.selectedCli || 'Local AI';
 
   return (
     <header className="h-13 shrink-0 bg-slate-950 px-4 flex items-center justify-between select-none z-30">
@@ -43,7 +54,30 @@ export const TopBar: React.FC<TopBarProps> = ({
         <span className="text-sm font-medium">Atoosa Flight Control</span>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        {/* Prominent AI Co-pilot connection button */}
+        <button
+          onClick={onOpenOnboarding}
+          className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors ${
+            isCliLinked
+              ? 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-slate-100 hover:border-slate-700'
+              : 'bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20'
+          }`}
+          title="Connect or reconfigure local AI co-pilot"
+        >
+          {isCliLinked ? (
+            <>
+              <span className="dot bg-emerald-400" />
+              <span>AI: {cliLabel}</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+              <span>Connect AI</span>
+            </>
+          )}
+        </button>
+
         <button onClick={onOpenTerminal} className="icon-btn" title="Terminal" aria-label="Terminal">
           <Terminal className="w-4 h-4" strokeWidth={1.75} />
           {isCliLinked && <span className="dot bg-emerald-400 absolute top-1.5 right-1.5" />}

@@ -20,7 +20,7 @@ system.post('/test-connection', async (c) => {
     const clis = await detectSystemCLIs();
     const found = clis.find((cl) => cl.id === cliId);
 
-    const execPath = customPath || found?.path || (cliId === 'claude-cli' ? 'claude' : 'ollama');
+    const execPath = customPath || found?.path || found?.command || cliId;
 
     const proc = Bun.spawn([execPath, '--version'], {
       env: { ...process.env },

@@ -90,6 +90,7 @@ export const App: React.FC = () => {
           {activeView === 'empty' && (
             <EmptyTowerView
               activeProject={activeProject}
+              settings={settings}
               onNavigate={setActiveView}
               onOpenOnboarding={() => setIsOnboardingOpen(true)}
             />
