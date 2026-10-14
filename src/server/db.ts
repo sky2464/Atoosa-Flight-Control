@@ -7,13 +7,18 @@ const PROJECTS_FILE = path.join(DATA_DIR, 'projects.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 
 const DEFAULT_SETTINGS: AISettings = {
-  activeProvider: 'system',
+  onboardingCompleted: false,
+  selectedCli: 'claude-cli',
+  claudeCliPath: '/Users/chicademy/.local/bin/claude',
   ollamaEndpoint: 'http://localhost:11434',
   ollamaModel: 'llama3:latest',
-  claudeCliPath: '/Users/chicademy/.local/bin/claude',
-  geminiApiKey: '',
-  openaiApiKey: '',
-  anthropicApiKey: '',
+  activeProvider: 'claude-cli',
+  profile: {
+    name: 'Flight Commander',
+    callsign: 'TOWER-1',
+    role: 'Lead Architect',
+    workstation: 'Localhost Mac',
+  },
 };
 
 async function ensureDataDir() {

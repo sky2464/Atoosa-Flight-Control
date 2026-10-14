@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Modular Autonomous Flight Control Tower for Software Development",
+  "bin": {
+    "afc": "./bin/afc.ts",
+    "flight-control": "./bin/afc.ts"
+  },
   "scripts": {
     "start": "bun src/server/index.ts",
     "dev": "bun --watch src/server/index.ts",

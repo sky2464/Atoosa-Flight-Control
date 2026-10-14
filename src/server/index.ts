@@ -8,6 +8,7 @@ import discovery from './routes/discovery.ts';
 import governance from './routes/governance.ts';
 import ai from './routes/ai.ts';
 import modules from './routes/modules.ts';
+import system from './routes/system.ts';
 
 const app = new Hono();
 
@@ -32,6 +33,7 @@ app.route('/api/discovery', discovery);
 app.route('/api/governance', governance);
 app.route('/api/ai', ai);
 app.route('/api/modules', modules);
+app.route('/api/system', system);
 
 // In production, serve static files from dist/ with SPA fallback
 try {

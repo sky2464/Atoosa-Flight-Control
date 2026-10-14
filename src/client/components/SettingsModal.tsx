@@ -1,21 +1,13 @@
 import React, { useState } from 'react';
-import {
-  Settings,
-  X,
-  Cpu,
-  Terminal,
-  Key,
-  CheckCircle2,
-  Save,
-} from 'lucide-react';
-import type { AISettings } from '../../shared/types.ts';
+import { X } from 'lucide-react';
+import type { AppSettings } from '../../shared/types.ts';
 import { api } from '../lib/api.ts';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  settings: AISettings | null;
-  onSaved: (updated: AISettings) => void;
+  settings: AppSettings | null;
+  onSaved: (updated: AppSettings) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -24,8 +16,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   onSaved,
 }) => {
-  const [provider, setProvider] = useState<AISettings['activeProvider']>(
-    settings?.activeProvider || 'system'
+  const [provider, setProvider] = useState<AppSettings['activeProvider']>(
+    settings?.activeProvider || 'claude-cli'
   );
   const [claudePath, setClaudePath] = useState(
     settings?.claudeCliPath || '/Users/chicademy/.local/bin/claude'
@@ -36,9 +28,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [ollamaModel, setOllamaModel] = useState(
     settings?.ollamaModel || 'llama3:latest'
   );
-  const [geminiKey, setGeminiKey] = useState(settings?.geminiApiKey || '');
-  const [openaiKey, setOpenaiKey] = useState(settings?.openaiApiKey || '');
-  const [anthropicKey, setAnthropicKey] = useState(settings?.anthropicApiKey || '');
+  const [name, setName] = useState(settings?.profile?.name || 'Flight Commander');
+  const [callsign, setCallsign] = useState(settings?.profile?.callsign || 'TOWER-1');
 
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -53,12 +44,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       const updated = await api.saveAISettings({
         activeProvider: provider,
+        selectedCli: provider,
         claudeCliPath: claudePath,
         ollamaEndpoint,
         ollamaModel,
-        geminiApiKey: geminiKey,
-        openaiApiKey: openaiKey,
-        anthropicApiKey: anthropicKey,
+        profile: {
+          name,
+          callsign,
+          role: 'Lead Architect',
+          workstation: 'Localhost Mac',
+        },
       });
 
       onSaved(updated);
@@ -66,7 +61,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setTimeout(() => {
         setSavedSuccess(false);
         onClose();
-      }, 700);
+      }, 600);
     } catch (err: any) {
       alert(`Failed to save settings: ${err.message}`);
     } finally {
@@ -74,134 +69,96 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
+  const providers = [
+    { id: 'claude-cli', label: 'Claude Code' },
+    { id: 'ollama', label: 'Ollama' },
+    { id: 'system', label: 'Built-in' },
+  ];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative">
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-white"
-        >
-          <X className="w-5 h-5" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 space-y-6 relative">
+        <button onClick={onClose} className="icon-btn absolute top-4 right-4" title="Close" aria-label="Close">
+          <X className="w-4 h-4" strokeWidth={1.75} />
         </button>
 
-        <div className="flex items-center space-x-2">
-          <Settings className="w-5 h-5 text-sky-400" />
-          <h2 className="text-lg font-bold text-white font-mono">Flight AI Engine Configuration</h2>
-        </div>
+        <h2 className="text-base font-medium text-slate-100">Settings</h2>
 
-        <form onSubmit={handleSave} className="space-y-4 text-xs font-mono">
-          <div>
-            <label className="block text-slate-400 mb-1.5 uppercase tracking-wider text-[11px]">
-              Active AI Provider:
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { id: 'system', label: 'Built-in Flight Engine' },
-                { id: 'claude-cli', label: 'Claude Code CLI' },
-                { id: 'ollama', label: 'Local Ollama' },
-                { id: 'gemini', label: 'Google Gemini (BYOK)' },
-              ].map((p) => (
+        <form onSubmit={handleSave} className="space-y-6 text-[13px]">
+          <fieldset className="space-y-2">
+            <legend className="text-slate-400 mb-2">AI engine</legend>
+            <div className="grid grid-cols-3 gap-2">
+              {providers.map((p) => (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => setProvider(p.id as any)}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
-                    provider === p.id
-                      ? 'border-sky-500 bg-sky-500/10 text-white font-bold'
-                      : 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700'
+                  aria-pressed={provider === p.id}
+                  className={`h-9 rounded-lg border transition-colors ${
+                    provider === p.id ? 'border-sky-400 text-slate-100' : 'border-slate-800 text-slate-400 hover:border-slate-700'
                   }`}
                 >
                   {p.label}
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
-          {/* Claude CLI path */}
           {provider === 'claude-cli' && (
-            <div className="space-y-2 p-3 rounded-xl bg-slate-950 border border-slate-800">
-              <span className="text-slate-300 font-bold block flex items-center space-x-1.5">
-                <Terminal className="w-4 h-4 text-sky-400" />
-                <span>Claude Code CLI Binary Path</span>
-              </span>
+            <label className="block space-y-1.5">
+              <span className="text-slate-400">Claude Code binary</span>
               <input
                 type="text"
                 value={claudePath}
                 onChange={(e) => setClaudePath(e.target.value)}
-                placeholder="/Users/chicademy/.local/bin/claude"
-                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-sky-500 text-[11px]"
+                placeholder="~/.local/bin/claude"
+                className="field font-mono text-[13px]"
               />
-              <p className="text-[10px] text-slate-500">
-                Spawns locally with your existing Claude subscription credentials via Bun.spawn.
-              </p>
-            </div>
+              <span className="block text-xs text-slate-400">Runs locally. No API keys needed.</span>
+            </label>
           )}
 
-          {/* Ollama Endpoint */}
           {provider === 'ollama' && (
-            <div className="space-y-2 p-3 rounded-xl bg-slate-950 border border-slate-800">
-              <span className="text-slate-300 font-bold block flex items-center space-x-1.5">
-                <Cpu className="w-4 h-4 text-emerald-400" />
-                <span>Local Ollama Server</span>
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] text-slate-500 block mb-0.5">Endpoint:</label>
-                  <input
-                    type="text"
-                    value={ollamaEndpoint}
-                    onChange={(e) => setOllamaEndpoint(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 text-[11px]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-500 block mb-0.5">Model Name:</label>
-                  <input
-                    type="text"
-                    value={ollamaModel}
-                    onChange={(e) => setOllamaModel(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 text-[11px]"
-                  />
-                </div>
-              </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block space-y-1.5">
+                <span className="text-slate-400">Endpoint</span>
+                <input type="text" value={ollamaEndpoint} onChange={(e) => setOllamaEndpoint(e.target.value)} className="field font-mono text-[13px]" />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-slate-400">Model</span>
+                <input type="text" value={ollamaModel} onChange={(e) => setOllamaModel(e.target.value)} className="field font-mono text-[13px]" />
+              </label>
             </div>
           )}
 
-          {/* API Keys (Optional) */}
-          <div className="space-y-2 p-3 rounded-xl bg-slate-950 border border-slate-800">
-            <span className="text-slate-400 font-bold block flex items-center space-x-1.5">
-              <Key className="w-3.5 h-3.5 text-amber-400" />
-              <span>Cloud API Keys (Optional BYOK)</span>
-            </span>
-            <div>
-              <label className="text-[10px] text-slate-500 block mb-0.5">Gemini API Key:</label>
-              <input
-                type="password"
-                placeholder="AIzaSy..."
-                value={geminiKey}
-                onChange={(e) => setGeminiKey(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 text-[11px]"
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block space-y-1.5">
+              <span className="text-slate-400">Name</span>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="field" />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-slate-400">Callsign</span>
+              <input type="text" value={callsign} onChange={(e) => setCallsign(e.target.value)} className="field uppercase" />
+            </label>
           </div>
 
-          <div className="pt-2 flex items-center justify-between">
-            {savedSuccess ? (
-              <span className="text-emerald-400 text-xs flex items-center space-x-1">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Settings saved!</span>
-              </span>
-            ) : (
-              <span></span>
-            )}
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-medium shadow-md shadow-sky-600/20"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>{isSaving ? 'Saving...' : 'Save Configuration'}</span>
-            </button>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-slate-300">
+              {savedSuccess && (
+                <>
+                  <span className="dot bg-emerald-400" />
+                  Saved
+                </>
+              )}
+            </span>
+            <div className="flex gap-2">
+              <button type="button" onClick={onClose} className="btn-ghost">
+                Cancel
+              </button>
+              <button type="submit" disabled={isSaving} className="btn-primary">
+                {isSaving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
