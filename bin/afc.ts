@@ -17,7 +17,7 @@ function printBanner() {
   | |_) | |    | | |  _| |_| | | |    | |  | | | |  \\| | | | | |_) | | | | |    
   |  __/| |___ | | |_| |  _  | | |    | |__| |_| | |\\  | | | |  _ <| |_| | |___ 
   |_|   |_____|___\\____|_| |_| |_|     \\____\\___/|_| \\_| |_| |_| \\_\\\\___/|_____|\x1b[0m
-  \x1b[90mAtoosa Flight Control Engine • CLI-First Architecture • v1.0.0\x1b[0m
+  \x1b[90mAtoosa Flight Control Engine • CLI-First Architecture • v0.1.0\x1b[0m
 `);
 }
 
