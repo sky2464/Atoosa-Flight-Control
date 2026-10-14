@@ -37,7 +37,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   const isCliLinked = !!settings?.onboardingCompleted && !!settings.selectedCli;
 
   return (
-    <header className="h-13 shrink-0 border-b border-slate-800/60 bg-slate-950 px-4 flex items-center justify-between select-none z-30">
+    <header className="h-13 shrink-0 bg-slate-950 px-4 flex items-center justify-between select-none z-30">
       <div className="flex items-center gap-2 text-slate-200">
         <Plane className="w-4 h-4 -rotate-45" strokeWidth={1.75} />
         <span className="text-sm font-medium">Atoosa Flight Control</span>

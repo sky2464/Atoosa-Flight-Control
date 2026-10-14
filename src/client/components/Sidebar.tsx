@@ -126,7 +126,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     'relative w-full h-8 flex items-center gap-2 px-3 rounded-md text-[13px] text-left transition-colors';
 
   return (
-    <aside className="w-60 shrink-0 border-r border-slate-800/60 bg-slate-950 flex flex-col select-none">
+    <aside className="w-60 shrink-0 bg-slate-950 flex flex-col select-none">
       <div className="p-4 pb-2">
         <ProjectPicker projects={projects} activeProject={activeProject} onSelectProject={onSelectProject} />
       </div>

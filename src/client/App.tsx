@@ -66,7 +66,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Workspace with Left Sidebar */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="relative flex-1 flex overflow-hidden">
         {/* Left Sidebar Menus & Submenus */}
         <Sidebar
           activeView={activeView}
@@ -76,8 +76,17 @@ export const App: React.FC = () => {
           onSelectProject={(p) => setActiveProject(p)}
         />
 
+        {/* Curved navy joint where the top bar meets the sidebar */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          className="absolute left-60 top-0 w-6 h-6 pointer-events-none z-10"
+        >
+          <path d="M0,0 H24 A24,24 0 0 0 0,24 Z" fill="#020617" />
+        </svg>
+
         {/* Main Viewport: Empty by default, loads content as needed */}
-        <main className="flex-1 min-w-0 overflow-y-auto bg-slate-950">
+        <main className="flex-1 min-w-0 overflow-y-auto bg-slate-900/50">
           {activeView === 'empty' && (
             <EmptyTowerView
               activeProject={activeProject}
