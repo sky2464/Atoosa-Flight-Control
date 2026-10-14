@@ -5,6 +5,7 @@ import type {
   PreFlightRecommendation,
   AISettings,
   ModuleDescriptor,
+  DetectedCLI,
 } from '../../shared/types.ts';
 import type { FlightTask } from '../../server/modules/project-manager/projectManagerService.ts';
 
@@ -191,5 +192,39 @@ export const api = {
     const res = await fetch(`${API_BASE}/modules/tasks/${id}`, { method: 'DELETE' });
     const data = await res.json();
     return data.success;
+  },
+
+  // System & CLI Engine
+  async getCLIs(): Promise<DetectedCLI[]> {
+    const res = await fetch(`${API_BASE}/system/clis`);
+    const data = await res.json();
+    return data.clis || [];
+  },
+
+  async testConnection(cliId: string, customPath?: string) {
+    const res = await fetch(`${API_BASE}/system/test-connection`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cliId, customPath }),
+    });
+    return res.json();
+  },
+
+  async completeOnboarding(payload: { selectedCli: string; claudeCliPath?: string; profile?: any }) {
+    const res = await fetch(`${API_BASE}/system/complete-onboarding`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return res.json();
+  },
+
+  async execCLI(command: string, args: string[] = []) {
+    const res = await fetch(`${API_BASE}/system/exec`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command, args }),
+    });
+    return res.json();
   },
 };

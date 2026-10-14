@@ -94,15 +94,34 @@ export interface ProjectRecord {
   telemetry?: TelemetrySummary;
 }
 
-export interface AISettings {
-  activeProvider: 'claude-cli' | 'ollama' | 'gemini' | 'openai' | 'anthropic' | 'system';
+export interface DetectedCLI {
+  id: string;
+  name: string;
+  command: string;
+  available: boolean;
+  version?: string;
+  path?: string;
+  description: string;
+}
+
+export interface AppProfile {
+  name: string;
+  callsign: string;
+  role: string;
+  workstation: string;
+}
+
+export interface AppSettings {
+  onboardingCompleted: boolean;
+  selectedCli: string;
+  claudeCliPath: string;
   ollamaEndpoint: string;
   ollamaModel: string;
-  claudeCliPath: string;
-  geminiApiKey: string;
-  openaiApiKey: string;
-  anthropicApiKey: string;
+  activeProvider: 'claude-cli' | 'ollama' | 'system';
+  profile: AppProfile;
 }
+
+export type AISettings = AppSettings;
 
 export interface ModuleDescriptor {
   id: string;

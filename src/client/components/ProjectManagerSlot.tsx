@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {
-  KanbanSquare,
-  Plus,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  Trash2,
-  User,
-  Bot,
-  Filter,
-} from 'lucide-react';
+import { Plus, Trash2, Bot, User } from 'lucide-react';
 import type { ProjectRecord } from '../../shared/types.ts';
 import type { FlightTask } from '../../server/modules/project-manager/projectManagerService.ts';
 import { api } from '../lib/api.ts';
+import { PageHeader } from './ui/PageHeader.tsx';
 
 interface ProjectManagerSlotProps {
   project: ProjectRecord | null;
@@ -84,191 +75,150 @@ export const ProjectManagerSlot: React.FC<ProjectManagerSlotProps> = ({ project 
     }
   };
 
-  const columns: { id: FlightTask['status']; label: string; color: string }[] = [
-    { id: 'backlog', label: 'Backlog Runway', color: 'border-slate-700' },
-    { id: 'in-progress', label: 'In-Flight Execution', color: 'border-sky-500' },
-    { id: 'review', label: 'Tower Review & QA', color: 'border-amber-500' },
-    { id: 'done', label: 'Landed & Verified', color: 'border-emerald-500' },
+  const columns: { id: FlightTask['status']; label: string }[] = [
+    { id: 'backlog', label: 'Backlog' },
+    { id: 'in-progress', label: 'In flight' },
+    { id: 'review', label: 'Review' },
+    { id: 'done', label: 'Landed' },
   ];
 
+  const priorityDot: Record<string, string> = {
+    critical: 'bg-rose-400',
+    high: 'bg-amber-400',
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-slate-900/80 border border-slate-800">
-        <div>
-          <div className="flex items-center space-x-2">
-            <KanbanSquare className="w-4 h-4 text-sky-400" />
-            <span className="text-xs font-mono uppercase text-slate-400">Modular Extension Slot</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white font-mono mt-1">Project Manager Tower</h1>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">
-            Agile task boards, human & AI agent assignments, and sprint governance.
-          </p>
-        </div>
+    <div className="page max-w-7xl">
+      <PageHeader
+        title="Kanban"
+        subtitle="Tasks for people and AI agents."
+        action={
+          <button onClick={() => setShowNewTaskModal(true)} className="btn-primary">
+            <Plus className="w-4 h-4" />
+            Add task
+          </button>
+        }
+      />
 
-        <button
-          onClick={() => setShowNewTaskModal(true)}
-          className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs shadow-md shadow-sky-600/20"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Flight Task</span>
-        </button>
-      </div>
-
-      {/* Kanban Board */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {columns.map((col) => {
           const colTasks = tasks.filter((t) => t.status === col.id);
           return (
-            <div key={col.id} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 flex flex-col h-[650px]">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
-                <span className="text-xs font-bold text-white font-mono uppercase flex items-center space-x-1.5">
-                  <span className={`w-2 h-2 rounded-full border ${col.color} bg-current`}></span>
-                  <span>{col.label}</span>
-                </span>
-                <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-bold">
-                  {colTasks.length}
-                </span>
-              </div>
+            <section key={col.id} className="flex flex-col min-h-[480px]">
+              <h2 className="flex items-center gap-2 pb-3 text-[13px] font-medium text-slate-300">
+                {col.label}
+                <span className="text-slate-500 font-normal">{colTasks.length}</span>
+              </h2>
 
-              {/* Tasks List */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              <div className="flex-1 space-y-2">
                 {colTasks.length === 0 ? (
-                  <div className="text-center py-12 text-slate-600 text-xs font-mono">
-                    Runway empty
-                  </div>
+                  <div className="h-24 rounded-lg border border-dashed border-slate-800/60" />
                 ) : (
                   colTasks.map((task) => (
-                    <div
+                    <article
                       key={task.id}
-                      className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition-all space-y-2 group"
+                      className="group p-3 rounded-lg border border-slate-800/60 hover:border-slate-700 transition-colors space-y-2"
                     >
-                      <div className="flex items-start justify-between">
-                        <h4 className="text-xs font-bold text-slate-200 font-mono leading-tight">{task.title}</h4>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-[13px] text-slate-100 leading-snug">{task.title}</h3>
                         <button
                           onClick={() => handleDeleteTask(task.id)}
-                          className="text-slate-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
+                          className="text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Delete task"
+                          aria-label="Delete task"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
                         </button>
                       </div>
 
-                      {task.description && (
-                        <p className="text-[11px] text-slate-400 leading-relaxed font-sans">{task.description}</p>
-                      )}
+                      {task.description && <p className="text-xs text-slate-400 leading-relaxed">{task.description}</p>}
 
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-900 text-[10px] font-mono">
-                        <span
-                          className={`px-1.5 py-0.5 rounded font-semibold uppercase ${
-                            task.priority === 'critical'
-                              ? 'bg-rose-500/20 text-rose-300'
-                              : task.priority === 'high'
-                              ? 'bg-amber-500/20 text-amber-300'
-                              : 'bg-slate-800 text-slate-400'
-                          }`}
-                        >
+                      <div className="flex items-center justify-between text-xs text-slate-400">
+                        <span className="flex items-center gap-1.5 capitalize">
+                          {priorityDot[task.priority] && <span className={`dot ${priorityDot[task.priority]}`} />}
                           {task.priority}
                         </span>
-
-                        <span className="flex items-center space-x-1 text-slate-400">
-                          {task.assignedTo === 'ai-agent' ? <Bot className="w-3 h-3 text-sky-400" /> : <User className="w-3 h-3" />}
-                          <span>{task.assignedTo}</span>
+                        <span className="flex items-center gap-1">
+                          {task.assignedTo === 'ai-agent' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                          {task.assignedTo}
                         </span>
                       </div>
 
-                      {/* Quick Move Select */}
-                      <div className="pt-1">
-                        <select
-                          value={task.status}
-                          onChange={(e: any) => handleStatusChange(task.id, e.target.value)}
-                          className="w-full text-[10px] font-mono bg-slate-900 border border-slate-800 rounded px-1.5 py-0.5 text-slate-400 focus:outline-none"
-                        >
-                          <option value="backlog">Move: Backlog</option>
-                          <option value="in-progress">Move: In-Flight</option>
-                          <option value="review">Move: Review</option>
-                          <option value="done">Move: Landed</option>
-                        </select>
-                      </div>
-                    </div>
+                      <select
+                        value={task.status}
+                        onChange={(e: any) => handleStatusChange(task.id, e.target.value)}
+                        className="w-full text-xs bg-slate-950 text-slate-400 focus:outline-none opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                        aria-label="Move task"
+                      >
+                        <option value="backlog">Move to Backlog</option>
+                        <option value="in-progress">Move to In flight</option>
+                        <option value="review">Move to Review</option>
+                        <option value="done">Move to Landed</option>
+                      </select>
+                    </article>
                   ))
                 )}
               </div>
-            </div>
+            </section>
           );
         })}
       </div>
 
-      {/* New Task Modal */}
       {showNewTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="text-base font-bold text-white font-mono">Add New Flight Task</h3>
-            <form onSubmit={handleCreateTask} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-slate-400 mb-1 font-mono">Task Title:</label>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 space-y-5">
+            <h3 className="text-base font-medium text-slate-100">New task</h3>
+            <form onSubmit={handleCreateTask} className="space-y-4 text-[13px]">
+              <label className="block space-y-1.5">
+                <span className="text-slate-400">Title</span>
                 <input
                   type="text"
-                  placeholder="e.g. Decompose authService.ts (>500 lines)"
+                  placeholder="Split authService.ts"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-sky-500"
+                  className="field"
                   required
                 />
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-slate-400 mb-1 font-mono">Description (optional):</label>
+              <label className="block space-y-1.5">
+                <span className="text-slate-400">Description</span>
                 <textarea
                   rows={3}
-                  placeholder="Details, acceptance criteria, or flight instructions..."
+                  placeholder="Optional details or acceptance criteria"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-sky-500"
+                  className="field h-auto py-2"
                 />
-              </div>
+              </label>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 mb-1 font-mono">Priority:</label>
-                  <select
-                    value={priority}
-                    onChange={(e: any) => setPriority(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-sky-500"
-                  >
+                <label className="block space-y-1.5">
+                  <span className="text-slate-400">Priority</span>
+                  <select value={priority} onChange={(e: any) => setPriority(e.target.value)} className="field bg-slate-900">
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                     <option value="critical">Critical</option>
                   </select>
-                </div>
+                </label>
 
-                <div>
-                  <label className="block text-slate-400 mb-1 font-mono">Assign To:</label>
-                  <select
-                    value={assignedTo}
-                    onChange={(e: any) => setAssignedTo(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-sky-500"
-                  >
+                <label className="block space-y-1.5">
+                  <span className="text-slate-400">Assign to</span>
+                  <select value={assignedTo} onChange={(e: any) => setAssignedTo(e.target.value)} className="field bg-slate-900">
                     <option value="unassigned">Unassigned</option>
-                    <option value="ai-agent">AI Agent (Claude / Copilot)</option>
-                    <option value="human">Human Developer</option>
+                    <option value="ai-agent">AI agent</option>
+                    <option value="human">Developer</option>
                   </select>
-                </div>
+                </label>
               </div>
 
-              <div className="pt-3 flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowNewTaskModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-800 text-slate-400 hover:text-white"
-                >
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setShowNewTaskModal(false)} className="btn-ghost">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-medium"
-                >
-                  Create Task
+                <button type="submit" className="btn-primary">
+                  Create task
                 </button>
               </div>
             </form>

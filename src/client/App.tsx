@@ -1,21 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import type { ProjectRecord, AISettings } from '../shared/types.ts';
+import type { ProjectRecord, AppSettings } from '../shared/types.ts';
 import { api } from './lib/api.ts';
-import { Navigation, type ActiveTab } from './components/Navigation.tsx';
+import { TopBar } from './components/TopBar.tsx';
+import { Sidebar, type ViewKey } from './components/Sidebar.tsx';
+import { EmptyTowerView } from './components/EmptyTowerView.tsx';
 import { FlightDeck } from './components/FlightDeck.tsx';
 import { PreFlightWizard } from './components/PreFlightWizard.tsx';
 import { TelemetryRadar } from './components/TelemetryRadar.tsx';
 import { GovernanceSuite } from './components/GovernanceSuite.tsx';
 import { ProjectManagerSlot } from './components/ProjectManagerSlot.tsx';
+import { TerminalConsole } from './components/TerminalConsole.tsx';
 import { ModulesTower } from './components/ModulesTower.tsx';
 import { SettingsModal } from './components/SettingsModal.tsx';
+import { OnboardingModal } from './components/OnboardingModal.tsx';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('flight-deck');
+  const [activeView, setActiveView] = useState<ViewKey>('empty');
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
   const [activeProject, setActiveProject] = useState<ProjectRecord | null>(null);
-  const [aiSettings, setAiSettings] = useState<AISettings | null>(null);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadProjects = async () => {
@@ -25,7 +30,6 @@ export const App: React.FC = () => {
       if (list.length > 0 && !activeProject) {
         setActiveProject(list[0]);
       } else if (activeProject) {
-        // Refresh active project state
         const refreshed = list.find((p) => p.id === activeProject.id);
         if (refreshed) setActiveProject(refreshed);
       }
@@ -37,7 +41,11 @@ export const App: React.FC = () => {
   const loadSettings = async () => {
     try {
       const s = await api.getAISettings();
-      setAiSettings(s);
+      setSettings(s);
+      // If first-time running and not onboarded, open onboarding modal!
+      if (s && !s.onboardingCompleted) {
+        setIsOnboardingOpen(true);
+      }
     } catch (err) {
       console.error('Failed to load settings:', err);
     }
@@ -48,91 +56,117 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      <Navigation
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        projects={projects}
-        activeProject={activeProject}
-        onSelectProject={(p) => setActiveProject(p)}
-        aiSettings={aiSettings}
+    <div className="h-screen bg-slate-950 text-slate-200 flex flex-col font-sans">
+      {/* Top bar: app icon, name and three icon buttons */}
+      <TopBar
+        settings={settings}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenTerminal={() => setActiveView('terminal-cli')}
+        onOpenOnboarding={() => setIsOnboardingOpen(true)}
       />
 
-      <main className="flex-1">
-        {activeTab === 'flight-deck' && (
-          <FlightDeck
-            projects={projects}
-            activeProject={activeProject}
-            onSelectProject={(p) => {
-              setActiveProject(p);
-              setActiveTab('radar');
-            }}
-            onStartNewProject={() => setActiveTab('pre-flight')}
-            onRefreshProjects={loadProjects}
-            onOpenRadar={() => setActiveTab('radar')}
-            onOpenGovernance={() => setActiveTab('governance')}
-          />
-        )}
+      {/* Main Workspace with Left Sidebar */}
+      <div className="relative flex-1 flex overflow-hidden">
+        {/* Left Sidebar Menus & Submenus */}
+        <Sidebar
+          activeView={activeView}
+          onSelectView={setActiveView}
+          projects={projects}
+          activeProject={activeProject}
+          onSelectProject={(p) => setActiveProject(p)}
+        />
 
-        {activeTab === 'pre-flight' && (
-          <PreFlightWizard
-            onFlightLaunched={(newFlight) => {
-              loadProjects();
-              setActiveProject(newFlight);
-              setActiveTab('radar');
-            }}
-            onCancel={() => setActiveTab('flight-deck')}
-          />
-        )}
+        {/* Curved navy joint where the top bar meets the sidebar */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          className="absolute left-60 top-0 w-6 h-6 pointer-events-none z-10"
+        >
+          <path d="M0,0 H24 A24,24 0 0 0 0,24 Z" fill="#020617" />
+        </svg>
 
-        {activeTab === 'radar' && (
-          <TelemetryRadar
-            project={activeProject}
-            onRefreshProject={loadProjects}
-            onNavigateGovernance={() => setActiveTab('governance')}
-          />
-        )}
+        {/* Main Viewport: Empty by default, loads content as needed */}
+        <main className="flex-1 min-w-0 overflow-y-auto bg-slate-900/50">
+          {activeView === 'empty' && (
+            <EmptyTowerView
+              activeProject={activeProject}
+              onNavigate={setActiveView}
+              onOpenOnboarding={() => setIsOnboardingOpen(true)}
+            />
+          )}
 
-        {activeTab === 'governance' && (
-          <GovernanceSuite
-            project={activeProject}
-            onRefreshProject={loadProjects}
-          />
-        )}
+          {(activeView === 'flights-all' || activeView === 'flights-attach') && (
+            <FlightDeck
+              projects={projects}
+              activeProject={activeProject}
+              onSelectProject={(p) => {
+                setActiveProject(p);
+                setActiveView('radar-500');
+              }}
+              onStartNewProject={() => setActiveView('flights-new')}
+              onRefreshProjects={loadProjects}
+              onOpenRadar={() => setActiveView('radar-500')}
+              onOpenGovernance={() => setActiveView('gov-agent')}
+            />
+          )}
 
-        {activeTab === 'project-manager' && (
-          <ProjectManagerSlot project={activeProject} />
-        )}
+          {activeView === 'flights-new' && (
+            <PreFlightWizard
+              onFlightLaunched={(newFlight) => {
+                loadProjects();
+                setActiveProject(newFlight);
+                setActiveView('radar-500');
+              }}
+              onCancel={() => setActiveView('empty')}
+            />
+          )}
 
-        {activeTab === 'modules' && (
-          <ModulesTower />
-        )}
-      </main>
+          {(activeView === 'radar-500' || activeView === 'radar-metrics' || activeView === 'radar-tdd') && (
+            <TelemetryRadar
+              project={activeProject}
+              onRefreshProject={loadProjects}
+              onNavigateGovernance={() => setActiveView('gov-agent')}
+            />
+          )}
 
+          {(activeView === 'gov-agent' || activeView === 'gov-architecture' || activeView === 'gov-checklist') && (
+            <GovernanceSuite
+              project={activeProject}
+              onRefreshProject={loadProjects}
+              initialDoc={
+                activeView === 'gov-architecture' ? 'architecture' : activeView === 'gov-checklist' ? 'rules' : 'agent'
+              }
+            />
+          )}
+
+          {activeView === 'runway-kanban' && (
+            <ProjectManagerSlot project={activeProject} />
+          )}
+
+          {activeView === 'terminal-cli' && (
+            <TerminalConsole onRefresh={loadProjects} />
+          )}
+
+          {activeView === 'modules-tower' && (
+            <ModulesTower />
+          )}
+        </main>
+      </div>
+
+      {/* Settings Modal (Zero API key clutter) */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        settings={aiSettings}
-        onSaved={(updated) => setAiSettings(updated)}
+        settings={settings}
+        onSaved={(updated) => setSettings(updated)}
       />
 
-      {/* Global Status Bar */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-3 text-slate-500 text-[11px] font-mono">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <span className="flex items-center space-x-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span className="text-slate-400">Tower Status: Online</span>
-            </span>
-            <span>•</span>
-            <span>Active Project: {activeProject ? activeProject.name : 'None selected'}</span>
-          </div>
-          <div>
-            <span>Atoosa Flight Control • Zero Target Contamination</span>
-          </div>
-        </div>
-      </footer>
+      {/* First-time Onboarding Modal (Connect to Terminal AI) */}
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onCompleted={(updated) => setSettings(updated)}
+      />
     </div>
   );
 };
