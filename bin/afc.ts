@@ -94,15 +94,22 @@ async function run() {
         }
       }
 
-      const claude = clis.find((c) => c.id === 'claude-cli' && c.available);
-      if (claude) {
+      const targetId = args[1]?.toLowerCase();
+      let chosen = targetId
+        ? clis.find((c) => (c.id.toLowerCase().includes(targetId) || c.command.toLowerCase() === targetId) && c.available)
+        : clis.find((c) => c.available && c.id !== 'bun');
+
+      if (chosen) {
         await saveSettings({
           onboardingCompleted: true,
-          selectedCli: 'claude-cli',
-          activeProvider: 'claude-cli',
-          claudeCliPath: claude.path,
+          selectedCli: chosen.id,
+          activeProvider: chosen.id as any,
+          claudeCliPath: chosen.path,
         });
-        console.log(`\n\x1b[32m✔ Successfully linked Flight Control to local Claude Code CLI (${claude.version})!\x1b[0m`);
+        console.log(`\n\x1b[32m✔ Successfully linked Flight Control to ${chosen.name} (${chosen.version})!\x1b[0m`);
+        console.log(`\x1b[90mTip: Run 'afc connect [name]' to link another engine (e.g. agy, claude, codex, cursor, gh).\x1b[0m\n`);
+      } else {
+        console.log(`\n\x1b[33m⚠ No suitable AI engine detected.\x1b[0m\n`);
       }
       break;
     }
