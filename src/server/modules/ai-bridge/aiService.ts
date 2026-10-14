@@ -1,4 +1,5 @@
 import { getSettings } from '../../db.ts';
+import { findExecutable } from '../../engine/os/process.ts';
 
 export interface PromptImprovementRequest {
   userIdea: string;
@@ -31,7 +32,7 @@ Container: ${req.containerChoice || 'Auto-decide'}`;
   // 1. Try Claude CLI if selected
   if (provider === 'claude-cli') {
     try {
-      const claudeBin = settings.claudeCliPath || 'claude';
+      const claudeBin = settings.claudeCliPath || (await findExecutable('claude')) || 'claude';
       const proc = Bun.spawn([claudeBin, '-p', `${systemInstructions}\n\n${userPrompt}`], {
         env: { ...process.env },
         signal,

@@ -23,7 +23,7 @@ app.use('/api/*', cors({
 app.get('/api/health', (c) => c.json({
   status: 'operational',
   service: 'Atoosa Flight Control Tower',
-  version: '1.0.0-mvp',
+  version: '0.1.0',
   timestamp: new Date().toISOString(),
 }));
 

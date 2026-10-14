@@ -20,7 +20,7 @@ system.post('/test-connection', async (c) => {
     const clis = await detectSystemCLIs();
     const found = clis.find((cl) => cl.id === cliId);
 
-    const execPath = customPath || found?.path || (cliId === 'claude-cli' ? 'claude' : 'ollama');
+    const execPath = customPath || found?.path || found?.command || cliId;
 
     const proc = Bun.spawn([execPath, '--version'], {
       env: { ...process.env },
@@ -69,7 +69,7 @@ system.post('/complete-onboarding', async (c) => {
 system.post('/exec', async (c) => {
   try {
     const { command, args = [] } = await c.req.json();
-    const binPath = path.resolve(process.cwd(), 'bin/afc.ts');
+    const binPath = path.resolve(import.meta.dir, '../../../bin/afc.ts');
     const proc = Bun.spawn(['bun', binPath, command, ...args], {
       env: { ...process.env },
       stdout: 'pipe',

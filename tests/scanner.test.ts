@@ -1,24 +1,47 @@
 import { describe, it, expect } from 'bun:test';
 import path from 'node:path';
+import os from 'node:os';
 import fs from 'node:fs/promises';
 import { softReadProject } from '../src/server/modules/scanner/scannerService.ts';
 
 describe('Scanner Service & Telemetry Radar', () => {
-  it('should scan an existing project and report metrics accurately', async () => {
-    const currentDir = process.cwd();
-    const telemetry = await softReadProject(currentDir);
+  it('should reject scanning the Control Tower itself (anti-dogfooding guard)', async () => {
+    const towerDir = process.cwd();
+    expect(softReadProject(towerDir)).rejects.toThrow('Control Tower');
+  });
 
-    expect(telemetry).toBeDefined();
-    expect(telemetry.totalFiles).toBeGreaterThan(0);
-    expect(telemetry.totalLines).toBeGreaterThan(0);
-    expect(telemetry.languageBreakdown).toBeDefined();
-    expect(telemetry.flightScore).toBeGreaterThanOrEqual(0);
-    expect(telemetry.flightScore).toBeLessThanOrEqual(100);
+  it('should scan an external target project and report metrics accurately', async () => {
+    const mockDir = path.join(os.tmpdir(), `afc_mock_project_${Date.now()}`);
+    await fs.mkdir(mockDir, { recursive: true });
+
+    // Create a mock codebase with package.json and source files
+    await fs.writeFile(
+      path.join(mockDir, 'package.json'),
+      JSON.stringify({ name: 'my-external-app', dependencies: { react: '^19.0.0' } }),
+      'utf-8'
+    );
+    await fs.writeFile(path.join(mockDir, 'App.tsx'), 'export const App = () => <div>Hello</div>;\n', 'utf-8');
+    await fs.writeFile(path.join(mockDir, 'App.test.tsx'), 'test("renders", () => {});\n', 'utf-8');
+
+    try {
+      const telemetry = await softReadProject(mockDir);
+
+      expect(telemetry).toBeDefined();
+      expect(telemetry.totalFiles).toBe(3); // package.json, App.tsx, App.test.tsx
+      expect(telemetry.totalLines).toBeGreaterThan(0);
+      expect(telemetry.languageBreakdown).toBeDefined();
+      expect(telemetry.flightScore).toBeGreaterThanOrEqual(0);
+      expect(telemetry.flightScore).toBeLessThanOrEqual(100);
+      expect(telemetry.detectedFrameworks).toContain('React');
+      expect(telemetry.testSetup.detected).toBe(true);
+    } finally {
+      await fs.rm(mockDir, { recursive: true, force: true });
+    }
   });
 
   it('should detect and flag files over 500 lines', async () => {
     // Create a temporary mock directory with a 600-line file
-    const tmpDir = path.join(process.cwd(), 'data', 'test_scan_mock');
+    const tmpDir = path.join(os.tmpdir(), `afc_test_monolith_${Date.now()}`);
     await fs.mkdir(tmpDir, { recursive: true });
 
     const longFile = path.join(tmpDir, 'monolith.ts');
@@ -35,7 +58,6 @@ describe('Scanner Service & Telemetry Radar', () => {
       expect(telemetry.filesOver500Lines[0].warningLevel).toBe('caution');
       expect(telemetry.warnings.some((w) => w.includes('500-line modular limit'))).toBe(true);
     } finally {
-      // Clean up mock
       await fs.rm(tmpDir, { recursive: true, force: true });
     }
   });
