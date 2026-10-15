@@ -9,8 +9,10 @@ coverage/
 data/test_*
 
 # Local runtime data written by the server
-data/projects.json
-data/settings.json
+data/*.json
+data/*.db
+data/*.db-*
+data/*.sqlite*
 
 # Logs
 *.log

@@ -130,7 +130,13 @@ export const Navigation: React.FC<NavigationProps> = ({
             >
               <Settings className="w-3.5 h-3.5" />
               <span className="hidden sm:inline font-mono text-[11px]">
-                {aiSettings?.activeProvider === 'claude-cli' ? 'Claude CLI' : aiSettings?.activeProvider === 'ollama' ? 'Ollama' : 'AI Bridge'}
+                {aiSettings?.activeProvider === 'antigravity'
+                  ? 'Antigravity'
+                  : aiSettings?.activeProvider === 'claude-cli'
+                  ? 'Claude CLI'
+                  : aiSettings?.activeProvider === 'ollama'
+                  ? 'Ollama'
+                  : 'AI Bridge'}
               </span>
             </button>
           </div>

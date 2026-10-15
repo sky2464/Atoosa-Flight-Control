@@ -117,7 +117,7 @@ export interface AppSettings {
   claudeCliPath: string;
   ollamaEndpoint: string;
   ollamaModel: string;
-  activeProvider: 'claude-cli' | 'ollama' | 'system';
+  activeProvider: 'claude-cli' | 'ollama' | 'system' | 'antigravity';
   profile: AppProfile;
 }
 
